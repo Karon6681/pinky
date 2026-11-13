@@ -69,9 +69,16 @@ class TaskSettings(context: Context) {
     }
 
     /** The core's start command for a task on a service, with its key. */
-    fun startRequest(task: String, key: String, p: String = provider): JSONObject = CoreClient.cmd(
-        "start",
-        "task" to task,
+    fun startRequest(task: String, key: String, p: String = provider): JSONObject =
+        modelRequest("start", key, p).put("task", task)
+
+    /**
+     * A command of the core that runs a task with the model's settings and
+     * key (StartRequest): start, and the schedules' schedule_due and
+     * schedule_run, whose task is the schedule's.
+     */
+    fun modelRequest(cmd: String, key: String, p: String = provider): JSONObject = CoreClient.cmd(
+        cmd,
         "key" to key,
         "provider" to p,
         "model" to model(p),
