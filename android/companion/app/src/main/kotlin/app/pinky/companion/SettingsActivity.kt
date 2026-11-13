@@ -78,6 +78,11 @@ class SettingsActivity : Activity() {
         costRow = look.row(getString(R.string.phone_cost_limit)) { chooseCost() }
         addGroup(col, R.string.phone_section_limits, stepsRow.view, timeRow.view, costRow.view)
 
+        val memoryRow = look.row(getString(R.string.phone_memory), desc = getString(R.string.phone_memory_desc)) {
+            startActivity(Intent(this, MemoryActivity::class.java))
+        }
+        addGroup(col, R.string.phone_memory, memoryRow.view)
+
         for ((id, title, desc) in PRESETS) {
             presets += id to look.choice(getString(title), getString(desc)) { setPreset(id) }
         }
