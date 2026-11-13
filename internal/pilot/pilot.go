@@ -254,9 +254,19 @@ func New(o Options) *Runner {
 
 // Start starts a task on a phone. It returns at once; Status follows it.
 func (r *Runner) Start(cfg Config, device, task string) error {
+	return r.StartWith(cfg, device, task, Extra{})
+}
+
+// StartWith starts a task on a phone with what the person gave besides
+// its words (Extra), as Start does.
+func (r *Runner) StartWith(cfg Config, device, task string, x Extra) error {
 	task = strings.TrimSpace(task)
 	if task == "" || device == "" {
 		return ErrNoTask
+	}
+	x, err := x.Check()
+	if err != nil {
+		return err
 	}
 	cfg = cfg.Normalize()
 	if cfg.Model == "" {
@@ -273,7 +283,7 @@ func (r *Runner) Start(cfg Config, device, task string) error {
 	}
 	ctx, cancel := context.WithCancel(r.ctx)
 	now := time.Now()
-	ru := &run{r: r, cancel: cancel, read: map[string]bool{},
+	ru := &run{r: r, cancel: cancel, read: map[string]bool{}, extra: x,
 		st: Status{Device: device, Task: task, Config: cfg, Started: now, Resumed: now}}
 	_, ru.st.Priced = priceOf(cfg)
 	r.runs[device] = ru
@@ -502,6 +512,9 @@ func (r *Runner) notify() {
 // run is one task.
 type run struct {
 	r *Runner
+	// extra is what the person gave with the task's words: it goes
+	// with the first message, and stays in the conversation for Continue.
+	extra Extra
 
 	mu      sync.Mutex
 	cancel  context.CancelFunc // the current stretch's
@@ -682,7 +695,10 @@ func (ru *run) work(ctx context.Context) (End, string) {
 		ru.mu.Lock()
 		ru.m, ru.tools = m, tools
 		ru.mu.Unlock()
-		text = firstMessage(task, device, res.text, time.Now())
+		text = firstMessage(task, device, res.text, time.Now()) + ru.extra.prompt()
+		if a, ok := m.(attacher); ok && len(ru.extra.Images) > 0 {
+			a.attach(ru.extra.images())
+		}
 	} else {
 		m.setKey(key)
 		text = continueMessage(device, res.text, time.Now())

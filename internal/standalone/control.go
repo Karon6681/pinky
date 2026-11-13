@@ -90,6 +90,10 @@ type reply struct {
 	Video   *videoInfo `json:"video,omitempty"` // video: the stream that follows
 }
 
+// maxLine bounds a command: pilot.MaxImages pictures in base64, and room
+// for the rest.
+const maxLine = pilot.MaxImages*pilot.MaxImageBytes*4/3 + 1<<20
+
 // historyWait bounds a history command, which reads the database.
 const historyWait = 10 * time.Second
 
@@ -108,6 +112,7 @@ const (
 	CodeRead           = "read"            // the model read it already: it can no longer change
 	CodeNoMessage      = "no_message"      // no such message: withdrawn already
 	CodeCannotContinue = "cannot_continue" // no task that ended can go on
+	CodeShared         = "shared"          // pilot.ErrExtra: what was shared is too large or not a picture
 )
 
 // Code is the code of a control command's error, or "" for one the
@@ -131,6 +136,8 @@ func codeOf(err error) string {
 		return CodeBusy
 	case errors.Is(err, ErrComputer):
 		return CodeComputer
+	case errors.Is(err, pilot.ErrExtra):
+		return CodeShared
 	case errors.Is(err, ErrGone):
 		return CodeGone
 	case errors.Is(err, pilot.ErrEmpty):
@@ -188,7 +195,8 @@ func (c *Core) serveConn(ctx context.Context, conn net.Conn) {
 		conn.Close()
 	}()
 	in := bufio.NewScanner(conn)
-	in.Buffer(make([]byte, 64<<10), 1<<20)
+	// A start may carry pictures the person shared (StartRequest.Images).
+	in.Buffer(make([]byte, 64<<10), maxLine)
 	enc := json.NewEncoder(conn)
 	for in.Scan() {
 		var r request
