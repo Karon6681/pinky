@@ -20,6 +20,11 @@ struct SettingsView: View {
             Form {
                 modelSection
                 limitsSection
+                Section {
+                    NavigationLink("Memory") { MemoryView() }
+                } footer: {
+                    Text("What Pinky remembers between tasks")
+                }
                 askSection
                 phoneSection
                 Section("About") {

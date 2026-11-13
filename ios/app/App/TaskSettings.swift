@@ -83,5 +83,8 @@ enum TaskSettings {
         return u.isEmpty || u.hasPrefix("https://") || u.hasPrefix("http://")
     }
 
+    /// Whether tasks read the notes and suggest new ones (MemoryView).
+    static var useMemory: Bool { d.object(forKey: "useMemory") as? Bool ?? true }
+
     private static func positive(_ n: Int) -> Int? { n > 0 ? n : nil }
 }

@@ -394,6 +394,7 @@ final class AppModel: ObservableObject {
             "cmd": "start", "task": text, "key": key, "provider": provider,
             "model": TaskSettings.model, "base_url": TaskSettings.baseURL,
             "max_steps": TaskSettings.maxSteps, "max_minutes": TaskSettings.maxMinutes, "max_cost": TaskSettings.maxCost,
+            "no_memory": !TaskSettings.useMemory,
         ])
         if !r.ok {
             endActivities(nil)
@@ -486,6 +487,24 @@ final class AppModel: ObservableObject {
     func setPreset(_ p: Preset) async {
         let r = await call(["cmd": "preset", "preset": p.rawValue])
         if !r.ok { problem = L.refused(r.code, r.error) }
+    }
+
+    // MARK: Memory
+
+    /// A notes command: the notes after it, or why the core said no.
+    func memory(_ req: [String: Any]) async -> Result<[Memory], MemoryRefusal> {
+        let r = await call(req)
+        if r.ok { return .success(r.memories ?? []) }
+        return .failure(MemoryRefusal(code: r.code))
+    }
+
+    struct MemoryRefusal: Error { var code: String? }
+
+    /// Keeps or drops the note the task suggested at index i; nil when it
+    /// went through, else why not.
+    func decideNote(_ i: Int, keep: Bool) async -> String? {
+        let r = await call(["cmd": keep ? "keep" : "drop", "index": i])
+        return r.ok ? nil : L.memoryError(r.code)
     }
 
     // MARK: Activity
