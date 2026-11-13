@@ -13,6 +13,7 @@ import (
 	"github.com/DIYgod/pinky/internal/gateway"
 	"github.com/DIYgod/pinky/internal/pilot"
 	"github.com/DIYgod/pinky/internal/policy"
+	"github.com/DIYgod/pinky/internal/schedule"
 	"github.com/DIYgod/pinky/internal/screen"
 )
 
@@ -35,6 +36,7 @@ import (
 //	{"cmd":"steer","id":"m1","text":"..."}              → {"ok":true}  (EditMessage; empty text withdraws)
 //	{"cmd":"withdraw","id":"m1"}                        → {"ok":true}  (Withdraw)
 //	{"cmd":"continue","text":"...","key":"..."}         → {"ok":true}  (Continue the task that ended)
+//	{"cmd":"schedule_…"} / {"cmd":"notice_seen"}        → the scheduled tasks (schedules.go)
 //
 // A message waits in the state's agent.pending until the model reads it;
 // steer with its id or withdraw then fail with the code read. Once a task
@@ -77,6 +79,14 @@ type request struct {
 	X      int    `json:"x"`
 	Y      int    `json:"y"`
 	StartRequest
+	// The schedules' commands (schedules.go): a schedule to save or
+	// preview, whether to pause the one named by ID, the phone's time
+	// zone, what the app knows of the phone, and a notice shown.
+	Schedule *schedule.Schedule `json:"schedule"`
+	Paused   bool               `json:"paused"`
+	Zone     string             `json:"zone"`
+	Notice   int64              `json:"notice"`
+	PhoneNow
 }
 
 type reply struct {
@@ -88,6 +98,10 @@ type reply struct {
 	More    bool       `json:"more,omitempty"`  // older tasks follow
 	ID      string     `json:"id,omitempty"`    // steer: the new message's
 	Video   *videoInfo `json:"video,omitempty"` // video: the stream that follows
+	// The schedules' commands (schedules.go).
+	Schedules []schedule.Schedule `json:"schedules,omitempty"`
+	NextMS    int64               `json:"next_ms,omitempty"`
+	Upcoming  []int64             `json:"upcoming,omitempty"`
 }
 
 // historyWait bounds a history command, which reads the database.
@@ -256,6 +270,9 @@ func (c *Core) handle(r request) reply {
 		err = c.HandBack(r.Note)
 	case "touch":
 		err = c.Touch(driver.TouchAction(r.Action), screen.Point{X: r.X, Y: r.Y})
+	case "schedules", "schedule_save", "schedule_preview", "schedule_delete", "schedule_pause", "schedule_run",
+		"schedule_due", "notice_seen":
+		return c.schedule(r)
 	default:
 		err = fmt.Errorf("unknown command %q", r.Cmd)
 	}
