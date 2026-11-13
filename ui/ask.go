@@ -418,6 +418,7 @@ func (a *app) askEnded(c *mg.Context, s pilot.Status) {
 			mg.Text(c, reason).FontSize(fsSmall).LineHeight(1.4).Selectable()
 		}
 		mg.Text(c, usageText(s, c.Now())).FontSize(fsCaption).TextColor(p.ink3).FontFeatures("tnum")
+		a.askSuggestions(c, s)
 	})
 	if !s.Continuable {
 		return
