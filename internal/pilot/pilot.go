@@ -157,6 +157,12 @@ type Status struct {
 	// count from there. Worked is the time of the stretches before it.
 	Resumed time.Time
 	Worked  time.Duration
+
+	// Scheduled is set for a scheduled task (StartScheduled); Met says
+	// whether its condition held, when it has one and the model finished.
+	// Continue makes it a task the person watches (run.attendLocked).
+	Scheduled *Scheduled
+	Met       *bool
 }
 
 // Running reports whether the task has not ended.
@@ -254,6 +260,10 @@ func New(o Options) *Runner {
 
 // Start starts a task on a phone. It returns at once; Status follows it.
 func (r *Runner) Start(cfg Config, device, task string) error {
+	return r.start(cfg, device, task, nil)
+}
+
+func (r *Runner) start(cfg Config, device, task string, sch *Scheduled) error {
 	task = strings.TrimSpace(task)
 	if task == "" || device == "" {
 		return ErrNoTask
@@ -274,7 +284,7 @@ func (r *Runner) Start(cfg Config, device, task string) error {
 	ctx, cancel := context.WithCancel(r.ctx)
 	now := time.Now()
 	ru := &run{r: r, cancel: cancel, read: map[string]bool{},
-		st: Status{Device: device, Task: task, Config: cfg, Started: now, Resumed: now}}
+		st: Status{Device: device, Task: task, Config: cfg, Started: now, Resumed: now, Scheduled: sch}}
 	_, ru.st.Priced = priceOf(cfg)
 	r.runs[device] = ru
 	r.launch(ctx, cancel, ru)
@@ -432,6 +442,7 @@ func (r *Runner) continueLocked(device, text string) error {
 	ru.st.Ended, ru.st.End, ru.st.Summary, ru.st.Continuable = time.Time{}, Running, "", false
 	ru.st.Continues++
 	ru.st.Resumed = now
+	ru.attendLocked()
 	ru.mu.Unlock()
 	r.launch(ctx, cancel, ru)
 	return nil
@@ -520,6 +531,9 @@ type run struct {
 	m     model
 	tools []tool
 	carry []result
+	// attended is what the model is told when the person continues a
+	// scheduled task that nobody watched (attendLocked).
+	attended string
 }
 
 func (ru *run) status() Status {
@@ -599,7 +613,9 @@ var waits = map[string]bool{"phone_handoff": true, "phone_request_approval": tru
 // work runs the task, or its next stretch after Continue, to its end.
 func (ru *run) work(ctx context.Context) (End, string) {
 	ru.mu.Lock()
-	cfg, device, task, taskID, m := ru.st.Config, ru.st.Device, ru.st.Task, ru.st.TaskID, ru.m
+	cfg, device, task, taskID, m, sch := ru.st.Config, ru.st.Device, ru.st.Task, ru.st.TaskID, ru.m, ru.st.Scheduled
+	attended := ru.attended
+	ru.attended = ""
 	ru.mu.Unlock()
 	key, err := ru.r.opt.Key(ctx, cfg.Provider)
 	switch {
@@ -635,7 +651,7 @@ func (ru *run) work(ctx context.Context) (End, string) {
 			return ru.ended(ctx, cs, err)
 		}
 		for _, t := range list.Tools {
-			if leftOut[t.Name] {
+			if leftOutFor(sch, t.Name) {
 				continue
 			}
 			s, _ := t.InputSchema.(map[string]any)
@@ -645,7 +661,7 @@ func (ru *run) work(ctx context.Context) (End, string) {
 			}
 			tools = append(tools, tool{name: t.Name, description: t.Description, schema: s})
 		}
-		tools = append(tools, finishTool)
+		tools = append(tools, finishFor(sch))
 	}
 
 	res := ru.call(ctx, cs, "phone_connect", map[string]any{"device": device, "task": oneLine(task)})
@@ -675,17 +691,23 @@ func (ru *run) work(ctx context.Context) (End, string) {
 
 	var text string
 	if m == nil {
-		m, err = newModel(cfg, key, ru.r.opt.HTTPClient, systemPrompt(cfg), tools)
+		m, err = newModel(cfg, key, ru.r.opt.HTTPClient, systemPrompt(cfg)+scheduledPrompt(sch), tools)
 		if err != nil {
 			return ru.end(cs, Error, err.Error())
 		}
 		ru.mu.Lock()
 		ru.m, ru.tools = m, tools
 		ru.mu.Unlock()
-		text = firstMessage(task, device, res.text, time.Now())
+		text = firstMessage(task, device, res.text, time.Now().In(zone(sch)))
+		if extra := scheduledMessage(sch); extra != "" {
+			text = strings.Replace(text, "</task>\n\n", "</task>\n\n"+extra, 1)
+		}
 	} else {
 		m.setKey(key)
-		text = continueMessage(device, res.text, time.Now())
+		text = continueMessage(device, res.text, time.Now().In(zone(sch)))
+		if attended != "" {
+			text += "\n\n" + attended
+		}
 	}
 	return ru.loop(ctx, cs, m, tools, key, text)
 }
@@ -806,6 +828,10 @@ func (ru *run) finish(ctx context.Context, cs *sdk.ClientSession, c call) (End, 
 	end := Failed
 	if strings.EqualFold(strings.TrimSpace(outcome), "done") {
 		end = Done
+	}
+	if sch := ru.status().Scheduled; sch != nil && sch.Condition != "" {
+		met, _ := c.args[conditionMet].(bool)
+		ru.update(func(s *Status) { s.Met = &met })
 	}
 	res := ru.call(ctx, cs, "phone_release", map[string]any{"outcome": string(end), "summary": summary})
 	if ctx.Err() != nil || res.status == "stopped" {
