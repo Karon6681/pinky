@@ -661,7 +661,14 @@ func (ru *run) work(ctx context.Context) (End, string) {
 		tools = append(tools, finishTool)
 	}
 
-	res := ru.call(ctx, cs, "phone_connect", map[string]any{"device": device, "task": oneLine(task)})
+	connect := map[string]any{"device": device, "task": oneLine(task)}
+	if ru.extra.Screen {
+		// A question about what the person sees: the phone's own screen,
+		// even when tasks run on a background display, whose screen is
+		// not theirs.
+		connect["own_screen"] = true
+	}
+	res := ru.call(ctx, cs, "phone_connect", connect)
 	if res.status == "internal" && ctx.Err() == nil {
 		// The phone is leased; only its first screen failed to read. One
 		// failed read (a busy accessibility service, as on the phone
