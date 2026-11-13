@@ -383,18 +383,22 @@ final class AppModel: ObservableObject {
 
     // MARK: Tasks
 
-    func startTask(_ text: String, key: String? = nil) async {
+    /// Starts a task; `shared` is text or a link to go with it (a
+    /// shortcut's, NewTaskIntent).
+    func startTask(_ text: String, shared: String = "", key: String? = nil) async {
         problem = nil
         let provider = TaskSettings.provider
         let key = key ?? Keychain.get(Keychain.keyAccount(provider)) ?? ""
         // iOS starts a Live Activity only for the app in front, and the core
         // takes Pinky off the screen before the agent's first step.
         startActivity(text)
-        let r = await call([
+        var req: [String: Any] = [
             "cmd": "start", "task": text, "key": key, "provider": provider,
             "model": TaskSettings.model, "base_url": TaskSettings.baseURL,
             "max_steps": TaskSettings.maxSteps, "max_minutes": TaskSettings.maxMinutes, "max_cost": TaskSettings.maxCost,
-        ])
+        ]
+        if !shared.isEmpty { req["shared"] = shared }
+        let r = await call(req)
         if !r.ok {
             endActivities(nil)
             problem = L.refused(r.code, r.error)

@@ -956,6 +956,57 @@
         }
       }
     },
+    "New Task" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新規タスク"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新建任务"
+          }
+        }
+      },
+      "comment" : "App Shortcut's short title"
+    },
+    "New Task in Pinky" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pinky で新規タスク"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Pinky 中新建任务"
+          }
+        }
+      },
+      "comment" : "App Intent title (Shortcuts)"
+    },
+    "New task in Pinky: ${task}" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pinky で新規タスク：${task}"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Pinky 中新建任务：${task}"
+          }
+        }
+      },
+      "comment" : "Shortcuts' summary of the action"
+    },
     "Next message for Pinky" : {
       "localizations" : {
         "ja" : {
@@ -1085,6 +1136,23 @@
           }
         }
       }
+    },
+    "Opens Pinky with a task in its box, and with text or a link to go with it. You start the task in Pinky." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タスクを入力欄に入れた状態で Pinky を開きます。文字やリンクを添えることもできます。タスクは Pinky で自分で開始します。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开 Pinky 并把任务填进输入框，可附带文字或链接。任务由你在 Pinky 中开始。"
+          }
+        }
+      },
+      "comment" : "App Intent description (Shortcuts)"
     },
     "Opus is the most capable; Sonnet and Haiku cost less." : {
       "localizations" : {
@@ -1397,6 +1465,23 @@
           }
         }
       }
+    },
+    "Pinky may not use speech recognition or the microphone. You can allow them in Settings › Privacy & Security." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pinky は音声認識またはマイクを使用できません。「設定 › プライバシーとセキュリティ」で許可できます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pinky 无法使用语音识别或麦克风。你可以在「设置 › 隐私与安全性」中允许。"
+          }
+        }
+      },
+      "comment" : "Voice input in the task box: the person declined a permission"
     },
     "Pinky needs to pair with this iPhone once. You do it in Settings, with a code Pinky shows here." : {
       "localizations" : {
@@ -1724,6 +1809,23 @@
         }
       }
     },
+    "Remove" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除"
+          }
+        }
+      },
+      "comment" : "Removes what a shortcut passed along with the task"
+    },
     "Remove the API key" : {
       "localizations" : {
         "ja" : {
@@ -1917,6 +2019,40 @@
         }
       }
     },
+    "Speak" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音声入力"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语音输入"
+          }
+        }
+      },
+      "comment" : "The mic button in the task box"
+    },
+    "Speech recognition is not available now." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在、音声認識を利用できません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语音识别现在不可用。"
+          }
+        }
+      },
+      "comment" : "Voice input in the task box could not start"
+    },
     "Start" : {
       "localizations" : {
         "ja" : {
@@ -2013,6 +2149,23 @@
         }
       }
     },
+    "Stop listening" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聞き取りを停止"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止收听"
+          }
+        }
+      },
+      "comment" : "The mic button while it listens"
+    },
     "Stopped" : {
       "comment" : "Live Activity: the person stopped the task",
       "localizations" : {
@@ -2046,6 +2199,23 @@
         }
       }
     },
+    "Task" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タスク"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "任务"
+          }
+        }
+      },
+      "comment" : "App Intent parameter"
+    },
     "Tell Pinky what to do next…" : {
       "localizations" : {
         "ja" : {
@@ -2061,6 +2231,23 @@
           }
         }
       }
+    },
+    "Text or a link for Pinky to use in the task." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pinky がタスクで使う文字やリンク。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "供 Pinky 在任务中使用的文字或链接。"
+          }
+        }
+      },
+      "comment" : "App Intent parameter description"
     },
     "The VPN" : {
       "localizations" : {
@@ -2553,6 +2740,23 @@
         }
       }
     },
+    "What came with the task is too long for Pinky." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タスクに添えた内容が長すぎるため、Pinky で扱えません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "随任务附带的内容太长，Pinky 无法处理。"
+          }
+        }
+      },
+      "comment" : "Start refused: the text a shortcut passed along is too large"
+    },
     "What should Pinky do on this iPhone?" : {
       "localizations" : {
         "ja" : {
@@ -2569,6 +2773,23 @@
         }
       }
     },
+    "What should Pinky do?" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pinky に何をさせますか？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要 Pinky 做什么？"
+          }
+        }
+      },
+      "comment" : "Shortcuts asks for the task"
+    },
     "When should Pinky ask you?" : {
       "localizations" : {
         "ja" : {
@@ -2584,6 +2805,23 @@
           }
         }
       }
+    },
+    "With" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添付"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "附带"
+          }
+        }
+      },
+      "comment" : "App Intent parameter: text or a link that goes with the task"
     },
     "Withdraw" : {
       "localizations" : {
