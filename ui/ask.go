@@ -198,6 +198,9 @@ func (a *app) askBox(c *mg.Context) {
 				mg.Text(c, modelName(cfg)).FontSize(fsCaption).FontWeight(fwMedium).TextColor(p.ink2).SingleLine()
 				mg.Text(c, locales.AskTaskLimit(limitText(cfg))).FontSize(fsCaption).TextColor(p.ink3).FontFeatures("tnum")
 			})
+			if a.schedOn() && quietButton(c.Key("ask-schedule"), locales.SchedButton()).Clicked() {
+				a.newSchedule(id, st.draft)
+			}
 			can := why == "" && strings.TrimSpace(st.draft) != ""
 			start := button(c, locales.AskStart(), btnOpt{kind: btnPrimary, small: true}).Disabled(!can)
 			if can && (start.Clicked() || area.Shortcut(mg.Cmd, mg.KeyEnter)) {

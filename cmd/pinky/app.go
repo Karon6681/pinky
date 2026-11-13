@@ -24,6 +24,7 @@ import (
 	"github.com/DIYgod/pinky/internal/gateway"
 	"github.com/DIYgod/pinky/internal/pilot"
 	"github.com/DIYgod/pinky/internal/policy"
+	"github.com/DIYgod/pinky/internal/schedule"
 	"github.com/DIYgod/pinky/internal/screen"
 	"github.com/DIYgod/pinky/internal/secret"
 	"github.com/DIYgod/pinky/internal/update"
@@ -149,6 +150,11 @@ func runApp(args []string) error {
 		Describe: ui.DescribePilot,
 	})
 	defer ask.Close()
+	// Ask Pinky's scheduled tasks; they run while the app runs.
+	schedules, err := schedule.Open(filepath.Join(dirs.Data, "schedules.json"))
+	if err != nil {
+		c.Log.Warn("open the scheduled tasks", "err", err)
+	}
 	ready := false
 	err = ui.Run(clientAPI(rg, tel, c.Fake), ui.Options{
 		BindShow: func(f func()) { show.Store(&f) },
@@ -158,8 +164,9 @@ func runApp(args []string) error {
 		Settings: &settings,
 		// The client's own lines, as the app's log: what the person's
 		// feedback carries.
-		Log:   c.Log,
-		Pilot: ask,
+		Log:       c.Log,
+		Pilot:     ask,
+		Schedules: schedules,
 		OnSettings: func(old, s ui.Settings) {
 			applySettings(rg, old, s, c.Log)
 			applyTelemetry(tel, s)
