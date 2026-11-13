@@ -1,6 +1,6 @@
 # Ask Pinky: the built-in agent
 
-A person types a task ("set an alarm for 7:00"), picks a phone and starts it; Pinky does it itself with a model of the person's choice, step by step, while they watch and can stop it. It is for simple tasks on one phone, for people who do not use Claude Code, Codex or another agent. It is not a general agent: one task, one phone, no skills, no memory between tasks.
+A person types a task ("set an alarm for 7:00"), picks a phone and starts it; Pinky does it itself with a model of the person's choice, step by step, while they watch and can stop it. It is for simple tasks on one phone, for people who do not use Claude Code, Codex or another agent. It is not a general agent: one task, one phone, no skills. Between tasks it keeps only the notes the person approves, and it reads a short guide for the app it is in (below).
 
 ## Code
 
@@ -73,6 +73,41 @@ The API key is in the system's keychain (`secret.Store`, account `model-key:<pro
 - Stop and Stop all stop the gateway's task first, then Pinky's loop, so the phone is free at once.
 - Settings › Agents › Ask Pinky: on or off (on by default), the service, the key, the model, the address and the three limits.
 
+## Memory and app guides
+
+`internal/pilot/memory.go`, `internal/pilot/knowledge.go`, `guides/`.
+
+### Memory: the person's notes
+
+- Two kinds of note: `said`, a fact or preference the person stated (the model must quote their words from the task, else the suggestion is refused), and `learned`, how to do something in an app, with the app's name.
+- Nothing is kept without the person's yes. The model has a `remember` tool that only suggests (at most `MaxSuggestions`, 3, a task); after the task the person keeps or drops each one, under the ending in the box (desktop), on the end card (Android, iPhone).
+- The rule for what never goes in, enforced in code (`Sensitive`, checked on suggest, keep, add and edit): passwords, PINs, verification or recovery codes, keys and tokens; card, account, ID and phone numbers (any run of digits that looks like one, full-width digits too); email addresses; street addresses (house numbers with a street word, and Chinese and Japanese address forms). A note may still say "the saved 「家」 address in Meituan": where something is, not what it is. Notes about an app the person blocked (`Options.Blocked`, the same check the gateway uses) are refused, and so are suggestions made while such an app was on the screen.
+- At most `MaxMemoryChars` (200) characters a note and `MaxMemories` (50) notes; a task sends at most `MaxNotesChars` (2,400) characters of them, newest first.
+- The notes go in the task's first message, in `<notes>`, introduced as the person's own notes for Pinky, to use where they fit and never as instructions from the screen. They are not part of the system prompt, so the prompt cache does not depend on them.
+- Each device keeps its own, never shared: desktop Pinky in `memory.json` in its data folder, Pinky on Android and on the iPhone in `memory.json` in the core's data folder. The file is 0600, written whole and renamed. A file that cannot be read leaves memory in RAM only for that run (logged): the person's notes are not overwritten, but changes made then do not last.
+- Where the person sees and changes them: Settings › Agents › Memory on the computer, Settings › Memory on Android and on the iPhone. Each has a switch for whether tasks use memory (on by default; off, a task neither reads nor suggests notes, and the notes stay), every note with where it came from, add, edit, delete and delete all.
+- The phones' screens reach the notes through the core's commands (`memories`, `memory_add`, `memory_edit`, `memory_delete`, `memory_delete_all`, `keep`, `drop`; `internal/standalone/control.go`, `ios/onphone/core.go`), which agents cannot send.
+
+### App guides
+
+- One Markdown file an app in `guides/` (front matter: name, other names, Android packages, iPhone bundle ids; a body of short lines, at most 1,000 characters). `guides/CONTRIBUTING.md` says how to write one and what stays out: rules for the agent, anything that gets around Pinky's rules or an app's security, personal data, instructions to the model. `go test ./guides` checks each.
+- A guide is sent the first time a task's screen shows its app (by package or bundle id; by name where the phone gives none), as Pinky's own text after the tool results, once a task. Trimming never clears it.
+- Guides now: WeChat, Alipay (where things are, to read), Meituan, Taobao, Xiaohongshu, Clock, Calculator, Settings, Amap, Google Maps and Apple Maps.
+
+### What they cost
+
+From `TestPromptCost` (characters; about 4 a token in English, 1–2 in Chinese):
+
+| | Characters |
+|---|---|
+| System prompt, without memory | 3,027 |
+| Memory's rules in the system prompt | +445 |
+| The `remember` tool | 1,068 |
+| Six typical notes, in the first message | 478 (at most 2,400) |
+| A guide, once a task per app | 873 on average, 1,080 at most |
+
+With memory off, the rules and the tool are left out too.
+
 ## Limits
 
 Each task has a step limit, a time limit and a cost limit, by default 100 steps, 20 minutes and US$2, changeable in Settings; the first one reached ends it with what was done so far. The time Pinky waits for the person (a handoff, an approval) does not count. Cost is reckoned from the usage the API reports and the model's prices (input, output, cache reads and writes); for a model Pinky has no prices for, the limit is in tokens, a million to the dollar. The end is one line, in Activity and in the box: "Done", "Couldn't finish. The model declined this task." or "Stopped. Reached the limit of 100 steps."
@@ -92,4 +127,5 @@ Estimate: a 20-step task on Opus 5.5 sends about 15–25k tokens a step, mostly 
 - `internal/pilot/steer_test.go`: messages while it works (edit, withdraw, read, before the first request, as the answer to text), Continue (one task in the history, the conversation's shape on both APIs, the limits anew, after Stop with a message waiting, a task that cannot continue), and `Elapsed`.
 - `internal/standalone/steer_test.go`: steer, withdraw and continue over the control socket, the codes, the step in another language, one task in the history.
 - `ui/ask_test.go`: the box, its setup state, saving the key, Start and Stop, Stop all, another agent on the phone, All phones and the endings, Send, Edit, Withdraw and Continue, with a fake runner.
-- Not tried yet: a real API call (needs the owner's key) and a real phone (needs their OK); steering and Continue against a real model.
+- `internal/pilot/knowledge_test.go`: the notes' file and limits, the sensitive rule, notes in the first message, suggestions kept and dropped, blocked apps, memory off, a guide once a task, and the cost above; `guides/guides_test.go` checks every guide; `ui/memory_test.go`, `internal/standalone/memory_test.go` and `ios/onphone/memory_test.go` the screens' side.
+- Not tried yet: a real API call (needs the owner's key) and a real phone (needs their OK); steering, Continue and memory against a real model.
